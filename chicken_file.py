@@ -9,7 +9,7 @@ from qss import QSS
 
 from PyQt5.QtCore import Qt # потрібна константа Qt.KeepAspectRatio для зміни розмірів із збереженням пропорцій
 from PyQt5.QtGui import QPixmap # оптимізована для показу на екрані картинка
-from PIL import Image
+from PIL import Image,ImageFilter
 
 app = QApplication([])
 win = QWidget()
@@ -109,6 +109,47 @@ class Image_processor:
         image_path = os.path.join(self.dir,self.save_dir,self.image_name)
         self.showImage(image_path)
 
+    def left (self):
+        self.image = self.image.transpose(Image.ROTATE_90)
+        self.saveImage()
+        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        self.showImage(image_path)
+
+
+    def right (self):
+        self.image = self.image.transpose(Image.ROTATE_270)
+        self.saveImage()
+        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        self.showImage(image_path)
+
+
+    def mirrror (self):
+        self.image = self.image.transpose(Image.FLIP_LEFT_RIGHT)
+        self.saveImage()
+        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        self.showImage(image_path)
+
+    def sharping (self):
+        self.image = self.image.filter(ImageFilter.SHARPEN)
+        self.saveImage()
+        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        self.showImage(image_path)
+
+
+    def add_frame(self):
+        texture = Image.open("wizard_frame.png")
+        width, height = self.image.size
+        texture = texture.resize((width, height))
+        self.image.paste(texture, (0, 0), texture)
+
+        self.saveImage()
+        image_path = os.path.join(workdir,
+                                  self.save_dir, self.image_name)
+        self.showImage(image_path)
+
+
+
+
 def showChosenImage():
     if lw_files.currentRow() >= 0:
         image_name = lw_files.currentItem().text()
@@ -117,14 +158,19 @@ def showChosenImage():
         workimage.showImage(image_path)
 
 
+
+
 btn_dir.clicked.connect(showFilenamesList)
 
 workimage = Image_processor() #поточне робоче зображення для роботи
 
 lw_files.currentRowChanged.connect(showChosenImage)
 btn_bw.clicked.connect(workimage.Do_BW)
-
-
+btn_left.clicked.connect(workimage.left)
+btn_right.clicked.connect(workimage.right)
+btn_flip.clicked.connect(workimage.mirrror)
+btn_sharp.clicked.connect(workimage.sharping)
+btn_custom.clicked.connect(workimage.add_frame)
 app.exec()
 
 

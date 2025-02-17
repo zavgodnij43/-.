@@ -23,13 +23,13 @@ lb_image = QLabel("Картинка")
 btn_dir = QPushButton("Папка")
 lw_files = QListWidget()
 
-
 btn_left = QPushButton("Уліво")
 btn_right = QPushButton("Управо")
 btn_flip = QPushButton("Дзеркало")
 btn_sharp = QPushButton("Різкість")
 btn_bw = QPushButton("Ч/Б")
-btn_custom = QPushButton('будь-яка')
+btn_custom = QPushButton("Рамка 1")
+rty = QPushButton("Рамка 2")
 
 row = QHBoxLayout()          # Основний рядок
 col1 = QVBoxLayout()         # ділиться на два стовпці
@@ -44,6 +44,7 @@ row_tools.addWidget(btn_flip)
 row_tools.addWidget(btn_sharp)
 row_tools.addWidget(btn_bw)
 row_tools.addWidget(btn_custom)
+row_tools.addWidget(rty)
 col2.addLayout(row_tools)
 
 row.addLayout(col1, 30)
@@ -62,11 +63,9 @@ def filter(files, extensions):
                result.append(filename)
    return result
 
-
 def chooseWorkdir():
    global workdir
    workdir = QFileDialog.getExistingDirectory()
-
 
 def showFilenamesList():
    extensions = [".jpg",".jpeg", ".png", ".gif", ".bmp"]
@@ -75,18 +74,21 @@ def showFilenamesList():
    lw_files.clear()
    for filename in filenames:
        lw_files.addItem(filename)
-class Image_processor:
 
+class Image_processor:
     def __init__(self):
         self.image = None
         self.dir = None
         self.image_name = None
         self.save_dir = 'Dumbledore/'
-    def LoadImage(self,dir,image_name):
+        self.original_image = None
+
+    def LoadImage(self, dir, image_name):
         self.dir = dir
         self.image_name = image_name
-        image_path = os.path.join(dir,image_name)
+        image_path = os.path.join(dir, image_name)
         self.image = Image.open(image_path)
+        self.original_image = self.image.copy()  # Save the original image
 
     def saveImage(self):
         ''' зберігає копію файлу у підпапці '''
@@ -100,54 +102,62 @@ class Image_processor:
         lb_image.hide()  # Ховає елемент `lb_image`, щоб під час зміни зображення користувач не бачив проміжного стану.
         pixmapimage = QPixmap(path)  # Завантажує зображення з вказаного шляху (`path`) у об'єкт `QPixmap`.
         w, h = lb_image.width(), lb_image.height()  # Зберігає поточну ширину (`w`) і висоту (`h`) віджета `lb_image`.
-        pixmapimage = pixmapimage.scaled(w, h,Qt.KeepAspectRatio)  # Масштабує зображення, щоб воно відповідало розмірам `lb_image`, зберігаючи пропорції.
+        pixmapimage = pixmapimage.scaled(w, h, Qt.KeepAspectRatio)  # Масштабує зображення, щоб воно відповідало розмірам `lb_image`, зберігаючи пропорції.
         lb_image.setPixmap(pixmapimage)  # Встановлює масштабоване зображення в якості вмісту для віджета `lb_image`.
         lb_image.show()
+
     def Do_BW(self):
         self.image = self.image.convert("L")
         self.saveImage()
-        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        image_path = os.path.join(self.dir, self.save_dir, self.image_name)
         self.showImage(image_path)
 
-    def left (self):
+    def left(self):
         self.image = self.image.transpose(Image.ROTATE_90)
         self.saveImage()
-        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        image_path = os.path.join(self.dir, self.save_dir, self.image_name)
         self.showImage(image_path)
 
-
-    def right (self):
+    def right(self):
         self.image = self.image.transpose(Image.ROTATE_270)
         self.saveImage()
-        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        image_path = os.path.join(self.dir, self.save_dir, self.image_name)
         self.showImage(image_path)
 
-
-    def mirrror (self):
+    def mirrror(self):
         self.image = self.image.transpose(Image.FLIP_LEFT_RIGHT)
         self.saveImage()
-        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        image_path = os.path.join(self.dir, self.save_dir, self.image_name)
         self.showImage(image_path)
 
-    def sharping (self):
+    def sharping(self):
         self.image = self.image.filter(ImageFilter.SHARPEN)
         self.saveImage()
-        image_path = os.path.join(self.dir,self.save_dir,self.image_name)
+        image_path = os.path.join(self.dir, self.save_dir, self.image_name)
         self.showImage(image_path)
 
+    def clear_frame(self):
+        self.image = self.original_image.copy()  # Restore the original image
 
     def add_frame(self):
+        self.clear_frame()  # Clear the existing frame
         texture = Image.open("wizard_frame.png")
         width, height = self.image.size
         texture = texture.resize((width, height))
         self.image.paste(texture, (0, 0), texture)
-
         self.saveImage()
-        image_path = os.path.join(workdir,
-                                  self.save_dir, self.image_name)
+        image_path = os.path.join(workdir, self.save_dir, self.image_name)
         self.showImage(image_path)
 
-
+    def add_ooo(self):
+        self.clear_frame()  # Clear the existing frame
+        texture = Image.open("image_2025-02-10_19-14-14.png")
+        width, height = self.image.size
+        texture = texture.resize((width, height))
+        self.image.paste(texture, (0, 0), texture)
+        self.saveImage()
+        image_path = os.path.join(workdir, self.save_dir, self.image_name)
+        self.showImage(image_path)
 
 
 def showChosenImage():
@@ -156,9 +166,6 @@ def showChosenImage():
         workimage.LoadImage(workdir,image_name)
         image_path = os.path.join(workimage.dir,workimage.image_name)  # Створює повний шлях до зображення, поєднуючи директорію та ім'я файлу.
         workimage.showImage(image_path)
-
-
-
 
 btn_dir.clicked.connect(showFilenamesList)
 
@@ -171,12 +178,5 @@ btn_right.clicked.connect(workimage.right)
 btn_flip.clicked.connect(workimage.mirrror)
 btn_sharp.clicked.connect(workimage.sharping)
 btn_custom.clicked.connect(workimage.add_frame)
+rty.clicked.connect(workimage.add_ooo)
 app.exec()
-
-
-
-
-
-
-
-
